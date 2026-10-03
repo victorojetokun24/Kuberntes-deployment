@@ -1,0 +1,25 @@
+# Optional teaching exercise: demonstrates a standalone Pod.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: swiftcart-pod-demo
+  namespace: swiftcart
+  labels:
+    app: swiftcart-pod-demo
+spec:
+  containers:
+    - name: swiftcart-api
+      image: swiftcart-api:3.0.0
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 5000
+      env:
+        - {name: APP_VERSION, value: "pod-demo"}
+        - {name: DB_HOST, value: "postgres"}
+        - {name: DB_PORT, value: "5432"}
+        - name: POSTGRES_DB
+          valueFrom: {configMapKeyRef: {name: swiftcart-config, key: POSTGRES_DB}}
+        - name: POSTGRES_USER
+          valueFrom: {secretKeyRef: {name: swiftcart-db-secret, key: POSTGRES_USER}}
+        - name: POSTGRES_PASSWORD
+          valueFrom: {secretKeyRef: {name: swiftcart-db-secret, key: POSTGRES_PASSWORD}}

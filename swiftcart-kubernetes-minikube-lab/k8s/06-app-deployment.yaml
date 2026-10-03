@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swiftcart-api
+  namespace: swiftcart
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: swiftcart-api
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: swiftcart-api
+    spec:
+      containers:
+        - name: swiftcart-api
+          image: swiftcart-api:3.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5000
+          env:
+            - name: APP_VERSION
+              valueFrom: {configMapKeyRef: {name: swiftcart-config, key: APP_VERSION}}
+            - name: DB_HOST
+              valueFrom: {configMapKeyRef: {name: swiftcart-config, key: DB_HOST}}
+            - name: DB_PORT
+              valueFrom: {configMapKeyRef: {name: swiftcart-config, key: DB_PORT}}
+            - name: POSTGRES_DB
+              valueFrom: {configMapKeyRef: {name: swiftcart-config, key: POSTGRES_DB}}
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: swiftcart-db-secret, key: POSTGRES_USER}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: swiftcart-db-secret, key: POSTGRES_PASSWORD}}
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 5
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 5
+          resources:
+            requests: {cpu: "100m", memory: "128Mi"}
+            limits: {cpu: "500m", memory: "256Mi"}
